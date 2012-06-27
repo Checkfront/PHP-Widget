@@ -1,4 +1,4 @@
-![Checkfront](https://media.checkfront.com/images/brand/Checkfront-Logo-Tag-60.png)
+![Checkfront](https://media.checkfront.com/images/brand/Checkfront-Logo-Tag-60.png "Checkfront Logo")
 
 Checkfront PHP Widget Class (v2.1)
 ==========================
