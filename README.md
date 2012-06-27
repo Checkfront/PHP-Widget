@@ -1,4 +1,4 @@
-![Checkfront](https://media.checkfront.com/images/brand/Checkfront-Logo-Tag-60.png "Checkfront Logo")
+![Checkfront](https://media.checkfront.com/images/brand/Checkfront-Logo-Tag-60.png)
 
 Checkfront PHP Widget Class (v2.1)
 ==========================
@@ -15,16 +15,6 @@ should provide you with the tools needed to further extend the platform.
 Except as otherwise noted, the Checkfront PHP SDK is licensed under the Apache Licence, Version 2.0
 (http://www.apache.org/licenses/LICENSE-2.0.html)
 
-Features
---------
-
-The Checkfront Widget Class provides the following functionality:
-
-*  
-* OAuth2 token refresh.
-* Session handing.
-* CQL query interface.
-* Access to Checkfront Objects via GET, POST, PUT and DELETE request.
 
 Usage
 -----
