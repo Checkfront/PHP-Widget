@@ -274,7 +274,7 @@ class CheckfrontWidget {
      * @param array $set 
      * @return string $html 
     */
-	private function droplet_set($set=array()) {
+	public function droplet_set($set=array()) {
 		if(count($set)) {
 			$CF_set = '<input type="hidden" id="CF_set" value="{' . implode(',',$set) . '}" />';
 		}
