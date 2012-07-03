@@ -4,7 +4,7 @@
  * PHP 5 
  *
  * @package     CheckfrontWidget
- * @version     2.0
+ * @version     2.2
  * @author      Checkfront <code@checkfront.com>
  * @copyright   2008-2012 Checkfront Inc 
  * @license     http://opensource.org/licenses/bsd-license.php New BSD License
@@ -52,18 +52,14 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * @access public
- * @package Checkfront
-*/
 class CheckfrontWidget {
 
-	public $lib_version = '2.1';
-	public $interface_lib_version = '2.1';
+	public $version = '2.2';
+	public $interface = 'v1'; //v2 recommended
+	public $interface_version = '2.5';
 	public $host= '';
 	public $src = '';
 	public $plugin_url = '';
-	public $interface = 'v1'; //v2 recommended
 	public $legacy_mode='inline';
 	public $embed = false;
 
@@ -73,15 +69,17 @@ class CheckfrontWidget {
 
 	public $load_msg = 'Searching Availability';
 	public $continue_msg = 'Continue to Secure Booking System';
+	public $offline_msg= 'Bookings not yet available here.';
 
-	public $args = array();
 
 	function __construct($cnf) {
-		$this->set_host($cnf['host']);
-		$this->set_pipe($cnf['pipe_url']);
-		$this->set_plugin_url($cnf['plugin_url']);
-		$this->interface = ($cnf['interface']) ? $cnf['interface'] : 'v1';
-		$this->provider = $cnf['provider'];
+
+		if(isset($cnf['host'])) $this->set_host($cnf['host']);
+		if(isset($cnf['pipe_url'])) $this->set_pipe($cnf['pipe_url']);
+		if(isset($cnf['plugin_url'])) $this->set_plugin_url($cnf['plugin_url']);
+		$this->interface = (isset($cnf['interface'])) ? $cnf['interface'] : 'v1';
+		$this->provider = (isset($cnf['provider'])) ? $cnf['provider'] : 'php';
+
 		if($cnf['load_msg']) $this->load_msg = strip_tags($cnf['load_msg']);
 		if($cnf['continue_msg']) $this->continue_msg = strip_tags($cnf['continue_msg']);
 	}
@@ -104,25 +102,6 @@ class CheckfrontWidget {
     */
 	function set_pipe($url) {
 		$this->pipe_url = preg_replace('|/$|','',$url);
-	}
-
-    /**
-     * get shortcode arg defaults
-     *
-     * @param void
-     * @return bool
-    */
-	public function get_args() {
-		$this->args['view']= get_option('checkfront_view');
-		$this->args['theme']= get_option('checkfront_theme');
-		$this->args['style_background-color']= get_option('checkfront_style_background-color');
-		$this->args['style_color']= get_option('checkfront_style_color');
-		$this->args['style_font-family']= get_option('checkfront_style_font-family');
-		$this->args['options-tabs']= get_option('checkfront_options-tabs');
-		$this->args['options-compact']= get_option('checkfront_options-compact');
-		$this->args['shortcode']= get_option('checkfront_shortcode');
-		if(!$this->args['shortcode']) $this->args['shortcode'] = '[checkfront]';
-		return true;
 	}
 
     /**
@@ -164,11 +143,7 @@ class CheckfrontWidget {
      * @return string $html formatted message
     */
 	public function error_config() {
-		if(is_admin()) {
-			return '<p style="padding: .5em; border: solid 1px red;">' . __('Please configure the Checkfront plugin in the Wordpress Admin.') . '</p>';
-		} else {
-			return '<p style="padding: .5em; border: solid 1px red;">' . __('Bookings not yet available here.') .'</p>';
-		}
+		return '<p style="padding: .5em; border: solid 1px red;">' . $this->offline_msg .'</p>';
 	}
 
     /**
@@ -194,10 +169,10 @@ class CheckfrontWidget {
     */
 	private function clean($cnf) {
 		foreach($cnf as $cnf_id => $data) {
-			$data = preg_replace("/\#|'/",'',strip_tags($data));
+			$data = preg_replace("/\#|'|>|</",'',strip_tags($data));
 			$cnf[$cnf_id] = $data;
 		}
-		return $cnf;
+		return $cnf;   
 	}
 
     /**
@@ -241,30 +216,33 @@ class CheckfrontWidget {
      * @return string $html rendering code
     */
 	private function v2_interface($cnf) {
-		$cnf['widget_id'] = ($cnf['widget_id'] > 0) ? $cnf['widget_id'] : '01';
-		$html = "\n<!-- CHECKFRONT BOOKING PLUGIN v{$this->lib_version}-->\n";
+		$cnf['widget_id'] = (isset($cnf['widget_id']) and $cnf['widget_id'] > 0) ? $cnf['widget_id'] : '01';
+		$html = "\n<!-- CHECKFRONT BOOKING PLUGIN v{$this->interface_version}-->\n";
 		$html .= '<div id="CHECKFRONT_WIDGET_' . $cnf['widget_id'] . '"><p id="CHECKFRONT_LOADER" style="background: url(\'//' . $this->host . '/images/loader.gif\') left center no-repeat; padding: 5px 5px 5px 20px">' . $this->load_msg . '...</p></div><noscript><a href="https://' . $this->host . '/reserve/" style="font-size: 16px">' . $this->continue_msg . ' &raquo;</a></noscript>';
 		$html .= "\n<script type='text/javascript'>\nnew CHECKFRONT.Widget ({\n";
 		$html .= "host: '{$this->host}',\n";
-		$html .= "provider: '{$this->provider}',\n";
 		$html .= "pipe: '{$this->pipe_url}',\n";
 		$html .= "target: 'CHECKFRONT_WIDGET_{$cnf['widget_id']}',\n";
-		// optional, or default items
-		if($cnf['item_id']) {
-			$this->cnf['item_id'] = $this->set_ids($this->cnf['item_id']);
+
+		// optional, or default items.  can be sku or category_id
+		if(isset($cnf['item_id'])) {
+			$cnf['item_id'] = $this->set_ids($cnf['item_id']);
 			$html .= "item_id: '{$cnf['category_id']}',\n";
 		}
-		if($cnf['category_id']) {
-			$this->cnf['category_id'] = $this->set_ids($this->cnf['category_id']);
+		//optional category_id(s)
+		if(isset($cnf['category_id']) and $cnf['category_id'] > 0) {
+			$cnf['category_id'] = $this->set_ids($cnf['category_id']);
 			$html .= "category_id: '{$cnf['category_id']}',\n";
 		}	
-		if($cnf['theme']) $html .= "theme: '{$this->theme}',\n";
-		if($cnf['width'] > 0)  $html .= "width: '{$cnf['width']}',\n";
-		if($cnf['layout'])  $html .= "layout: '{$cnf['layout']}',\n";
-		if($cnf['tid'])  $html .= "tid: '{$cnf['tid']}',\n";
-		if($cnf['options'])  $html.= "options: '{$cnf['options']}',\n";
-		if($cnf['style'])  $html .= "style: '{$cnf['style']}'";
-		$html .="\n}).render();\n</script>\n";
+		if(isset($cnf['theme'])) $html .= "theme: '{$this->theme}',\n";
+		if(isset($cnf['width']) and $cnf['width'] > 0)  $html .= "width: '{$cnf['width']}',\n";
+		if(isset($cnf['layout']))  $html .= "layout: '{$cnf['layout']}',\n";
+		if(isset($cnf['tid']))  $html .= "tid: '{$cnf['tid']}',\n";
+		if(isset($cnf['options']))  $html.= "options: '{$cnf['options']}',\n";
+		if(isset($cnf['date']))  $html.= "date: '{$cnf['date']}',\n";
+		if(isset($cnf['style']))  $html .= "style: '{$cnf['style']}',";
+		$html .= "\nprovider: '{$this->provider}'\n";
+		$html .="}).render();\n</script>\n";
 		return $html;
 	}	
 
@@ -275,13 +253,14 @@ class CheckfrontWidget {
      * @return string $html 
     */
 	public function droplet_set($set=array()) {
+		$cnf = '';
 		if(count($set)) {
-			$CF_set = '<input type="hidden" id="CF_set" value="{' . implode(',',$set) . '}" />';
+			$cnf = '<input type="hidden" id="CF_set" value="{' . implode(',',$set) . '}" />';
 		}
 		if($this->book_url) {
-			$CF_set .= '<input type="hidden" id="CF_src" value="' . $this->book_url .'" />';
+			$cnf .= '<input type="hidden" id="CF_src" value="' . $this->book_url .'" />';
 		}
-		return $CF_set;
+		return $cnf ;
 	}
 
 
@@ -292,7 +271,7 @@ class CheckfrontWidget {
      * @return string html id
     */
 	function droplet($set) {
-		return '<div id="CF" class="' . $this->host . '"><p id="CF_load" class="CF_load">' . __('Searching Availability...') . $this->droplet_set($set) . '</div>';
+		return '<div id="CF" class="' . $this->host . '"><p id="CF_load" class="CF_load">' . $this->load_msg . $this->droplet_set($set) . '</div>';
 	}
 }
 ?>

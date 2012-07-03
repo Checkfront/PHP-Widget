@@ -29,7 +29,7 @@ CheckfrontWidget::render() where you wish to display the booking portal.
 ```html
 <html>
 	<head>
-		<script src="//media.checkfront.com/lib/interface.js?v=2.5" type="text/javascript"></script>
+		<script src="//media.checkfront.com/lib/interface--4.js" type="text/javascript"></script>
 	</head>
 </html>
 ```
