@@ -1,6 +1,6 @@
 ![Checkfront](https://media.checkfront.com/images/brand/Checkfront-Logo-Tag-60.png)
 
-Checkfront PHP Widget Class (v2.1)
+Checkfront PHP Widget Class (v2.4)
 ==========================
 
 The [Checkfront Widget Class](http://www.checkfront.com/developers/widget/) allows you 
@@ -29,7 +29,7 @@ CheckfrontWidget::render() where you wish to display the booking portal.
 ```html
 <html>
 	<head>
-		<script src="//media.checkfront.com/lib/interface--4.js" type="text/javascript"></script>
+		<script src="//media.checkfront.com/lib/interface--20.js" type="text/javascript"></script>
 	</head>
 </html>
 ```
@@ -56,13 +56,12 @@ include_once('CheckfrontWidget.php');
 $Checkfront = new CheckfrontWidget(
    array(
          'host'=>$checkfront_host, 
-         'pipe_url'=>"{$schema}://{$_SERVER['HTTP_HOST']}/pipe.html", 
-         'interface' =>'v2',
+         'pipe_url'=>"/pipe.html", 
     )
 );
 
 // Let's build a basic web page, with the required javascript include 
-echo '<html><head><script src="//' . $checkfront_host . '/lib/interface.js?v=3" type="text/javascript"></script></head><body>';
+echo '<html><head><script src="//' . $checkfront_host . '/lib/interface--20.js" type="text/javascript"></script></head><body>';
 
 echo '<div style="width: 1000px; margin: 0 auto"><h1>Book Online!</h1>';
 
