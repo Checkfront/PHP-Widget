@@ -18,7 +18,7 @@ $Checkfront = new CheckfrontWidget(
 // pipe.html is included in this package.
 
 // Let's build a basic web page, with the required javascript include 
-echo '<html><head><script src="//' . $checkfront_host . '/lib/interface.js?v=20" type="text/javascript"></script></head><body>';
+echo '<html><head><script src="//' . $checkfront_host . '/lib/interface.js?v='.$Checkfront->interface_version.'" type="text/javascript"></script></head><body>';
 
 echo '<div style="width: 1000px; margin: 0 auto"><h1>Book Online!</h1>';
 
@@ -28,7 +28,6 @@ echo $Checkfront->render(
         'options'=>'tabs,compact', // use tab layout and compact layout (optional)
         'style'=>'background-color: #fff; color: #000; font-family: Arial',
         'tid'=>'homepage', // custom tracking id to attach to bookings
-		'theme'=>'default',
 		'layout'=>'D', // detail or list view for the booking page
 		'width'=>'auto', // will assume the width of the parent by default
 		'category_id'=>'', // numeric category_id

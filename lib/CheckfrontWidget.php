@@ -1,19 +1,19 @@
-<?php 
+<?php
 /**
- * Checkfront Widget 
- * PHP 5 
+ * Checkfront Widget
+ * PHP 5-7
  *
  * @package     CheckfrontWidget
- * @version     2.4
+ * @version     3.0
  * @author      Checkfront <code@checkfront.com>
- * @copyright   2008-2013 Checkfront Inc 
+ * @copyright   2008-2016 Checkfront Inc
  * @license     http://opensource.org/licenses/bsd-license.php New BSD License
  * @link        http://www.checkfront.com/developers/
  * @link        https://github.com/Checkfront/PHP-Widget
  *
  *
  * This makes use of the Checkfront embeddable widgets. It allows you
- * to embed a booking widget into any website, allows you to customize 
+ * to embed a booking widget into any website, allows you to customize
  * the look and feel, and takes care of sizing, caching etc.
  *
  * If the booking page is hosted under SSL and e-commerce is enabled
@@ -24,8 +24,8 @@
  * This class is designed to provide a quick way of integrating Checkfront
  * into a website.  If you wish to further extend the platform, consider
  * using the Checkfront SDK and API instead:
- * https//www.checkfront.com/developers/api/ 
- *  
+ * http://api.checkfront.com/
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -54,11 +54,13 @@
 
 class CheckfrontWidget {
 
-	public $version = '2.4';
-	public $interface_build = '20';
+	public $version = '3.0';
+	public $interface_version = '23';
 	public $host= '';
+	public $url = '';
 	public $src = '';
 	public $plugin_url = '';
+	public $pipe_url = '';
 
 
 	public $load_msg = 'Searching Availability';
@@ -79,125 +81,116 @@ class CheckfrontWidget {
 		if($cnf['continue_msg']) $this->continue_msg = strip_tags($cnf['continue_msg']);
 	}
 
-    /**
-     * set the url base for the widget.  should be an absolute url local to the site
-     * eg: http://www.mysite.com/checkfront-plugin -- must also match the current schema (http:// | https://)
-     * @param string $url
-     * @return bool
-    */
+	/**
+	 * set the url base for the widget.  should be an absolute url local to the site
+	 * eg: http://www.mysite.com/checkfront-plugin -- must also match the current schema (http:// | https://)
+	 * @param string $url
+	 */
 	function set_plugin_url($url) {
 		$this->plugin_url = preg_replace('|/$|','',$url);
 	}
 
 
-    /**
-     * set location of the pipe file.  most be located on the same server.
-     * @param string $url
-     * @return bool
-    */
+	/**
+	 * set location of the pipe.html file. Must be located on the same domain.
+	 * @param string $url
+	 */
 	function set_pipe($url) {
 		$this->pipe_url = preg_replace('|/$|','',$url);
 	}
 
-    /**
-     * sets the checkfront host
-     *
-     * @param string $host
-     * @return bool
-    */
+	/**
+	 * sets the checkfront host
+	 * @param string $host
+	 */
 	private function set_host($host) {
 		$this->host = $host;
 		$this->url = "//{$this->host}";
-		return true;
 	}
 
-    /**
-     * set valid host
-     *
-     * @param string $host
-     * @return string $host  
-    */
-	public function valid_host($value) {
-		if(!preg_match('~^http://|https://~',$value)) $value = 'https://' . $value;
-		if($uri = parse_url($value)) {
+	/**
+	 * set valid host
+	 *
+	 * @param string $host
+	 * @return string $host
+	 */
+	public function valid_host($host) {
+		if(!preg_match('~^http://|https://~',$host)) $host = 'https://' . $host;
+		if($uri = parse_url($host)) {
 			if($uri['host']) {
-				$host= $uri['host'];
+				return $uri['host'];
 			}
 		}
-		return $host;
+		return '';
 	}
 
-
-    /**
-     * display error when plugin is not yet configured
-     *
-     * @param void
-     * @return string $html formatted message
-    */
+	/**
+	 * display error when plugin is not yet configured
+	 *
+	 * @return string $html formatted message
+	 */
 	public function error_config() {
 		return '<p style="padding: .5em; border: solid 1px red;">' . $this->offline_msg .'</p>';
 	}
 
-    /**
-     * render booking widget
-     *
-     * @param array $cnf shortcode paramaters
-     * @return string $html rendering code
-    */
+	/**
+	 * render booking widget
+	 *
+	 * @param array $cnf shortcode parameters
+	 * @return string $html rendering code
+	 */
 	public function render($cnf) {
 		$cnf = $this->clean($cnf);
 		return $this->portal($cnf);
 	}
 
-    /**
-     * clean short code params
-     *
-     * @param array $cnf shortcode paramaters
-     * @return array $cnf formatted paramaters
-    */
+	/**
+	 * clean short code params
+	 *
+	 * @param array $cnf shortcode parameters
+	 * @return array $cnf formatted parameters
+	 */
 	private function clean($cnf) {
 		foreach($cnf as $cnf_id => $data) {
 			$data = preg_replace("/\#|'|>|</",'',strip_tags($data));
 			$cnf[$cnf_id] = $data;
 		}
-		return $cnf;   
+		return $cnf;
 	}
-    /**
-     * set the category and item id filters
-     *
-     * @param strong $ids 
-     * @return string $ids eg 1,2,5
-    */
+	/**
+	 * set the category and item id filters
+	 *
+	 * @param string $ids
+	 * @return string $ids eg 1,2,5
+	 */
 	private function set_ids($ids) {
 		return preg_replace("/[^0-9,]/",'',$ids);
 	}
 
 
-    /**
-     * render booking portal
-     *
-     * @param array $cnf shortcode paramaters
-     * @return string $html rendering code
-    */
-	private function portal($arg=array()) {
+	/**
+	 * @param array $cnf shortcode parameters
+	 * @return string $html rendering code
+	 */
+	private function portal($cnf=array()) {
 
-		$cnf = array(
-			'widget_id'=>'',
-			'item_id'=>'',
-			'filter_category_id'=>'',
-			'category_id'=>'',
-			'theme'=>'',
-			'layout'=>'',
-			'tid'=>'',
-			'options'=>'',
-			'date'=>'',
-			'style'=>'',
-			'host'=>'',
+		$cnf_default = array(
+			'widget_id'          => '',
+			'item_id'            => '',
+			'category_id'        => '',
+			'layout'             => '',
+			'discount_code'      => '',
+			'discount'           => '',
+			'lang_id'            => '',
+			'tid'                => '',
+			'partner_id'         => '',
+			'options'            => '',
+			'date'               => '',
+			'end_date'           => '',
+			'style'              => '',
+			'host'               => '',
 		);
-
-		if(count($arg)) {
-			$cnf = array_merge($cnf,$arg);
-		}
+		$cnf = array_merge($cnf_default, $cnf ? $cnf : []);
 
 		if($cnf['host'] and $this->valid_host($cnf['host'])) {
 			$this->set_host($cnf['host']);
@@ -206,32 +199,38 @@ class CheckfrontWidget {
 		$cnf['widget_id'] = (isset($cnf['widget_id']) and $cnf['widget_id'] > 0) ? $cnf['widget_id'] : '01';
 		$html = "\n<!-- CHECKFRONT BOOKING PLUGIN v{$this->interface_version}-->\n";
 		$html .= '<div id="CHECKFRONT_WIDGET_' . $cnf['widget_id'] . '"><p id="CHECKFRONT_LOADER" style="background: url(\'//' . $this->host . '/images/loader.gif\') left center no-repeat; padding: 5px 5px 5px 20px">' . $this->load_msg . '...</p></div>';
-		$html .= "\n<script type='text/javascript'>\nnew CHECKFRONT.Widget ({\n";
+		$html .= "\n<script>\nnew CHECKFRONT.Widget ({\n";
 		$html .= "host: '{$this->host}',\n";
-		$html .= "pipe: '{$this->pipe_url}',\n";
+		if($this->pipe_url) {
+			$html .= "pipe: '{$this->pipe_url}',\n";
+		}
 		$html .= "target: 'CHECKFRONT_WIDGET_{$cnf['widget_id']}',\n";
 
-		// optional, or default items.  can be sku or category_id
+		// Comma separated list of item_ids or skus to filter by
 		if($cnf['item_id']) {
 			$cnf['item_id'] = $this->set_ids($cnf['item_id']);
 			$html .= "item_id: '{$cnf['item_id']}',\n";
 		}
-		//optional category_id(s)
+		// Comma separated list of category ids to filter by.
 		if($cnf['category_id']) {
 			$cnf['category_id'] = $this->set_ids($cnf['category_id']);
 			$html .= "category_id: '{$cnf['category_id']}',\n";
-		}	
-		if($cnf['theme']) $html .= "theme: '{$this->theme}',\n";
+		}
 		if($cnf['width'] and $cnf['width'] > 0)  $html .= "width: '{$cnf['width']}',\n";
 		if($cnf['layout'])  $html .= "layout: '{$cnf['layout']}',\n";
 		if($cnf['tid'])  $html .= "tid: '{$cnf['tid']}',\n";
+		if($cnf['partner_id'])  $html .= "partner_id: '{$cnf['partner_id']}',\n";
+		if($cnf['discount_code'])  $html .= "discount_code: '{$cnf['discount_code']}',\n";
+		elseif($cnf['discount'])  $html .= "discount_code: '{$cnf['discount']}',\n";
+		if($cnf['lang_id'])  $html .= "lang_id: '{$cnf['lang_id']}',\n";
+		if($cnf['locale_id']) $html .= "locale_id: '{$cnf['locale_id']}',\n";
 		if($cnf['options'])  $html.= "options: '{$cnf['options']}',\n";
 		if($cnf['date'])  $html.= "date: '{$cnf['date']}',\n";
+		if($cnf['end_date'])  $html.= "end_date: '{$cnf['end_date']}',\n";
 		if($cnf['style'])  $html .= "style: '{$cnf['style']}',\n";
 		$html .= "provider: '{$this->provider}'\n";
 		$html .="}).render();\n</script>\n";
 		$html .= '<noscript><a href="https://' . $this->host . '/reserve/" style="font-size: 16px">' . $this->continue_msg . ' &raquo;</a></noscript>' . "\n";
 		return $html;
-	}	
+	}
 }
-?>
