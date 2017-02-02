@@ -1,4 +1,4 @@
-![Checkfront](https://media.checkfront.com/images/brand/Checkfront-Logo-Tag-60.png)
+![Checkfront](https://media.checkfront.com/images/logo/Checkfront-80.png)
 
 Checkfront PHP Widget Class (v2.4)
 ==========================
@@ -21,18 +21,6 @@ Usage
 
 You'll need to include the CheckfrontWidget.php class, and call 
 CheckfrontWidget::render() where you wish to display the booking portal.
-
-*You must:*
-
-**Include the Checkfront javascript library in your html head:**
-
-```html
-<html>
-	<head>
-		<script src="//media.checkfront.com/lib/interface--20.js" type="text/javascript"></script>
-	</head>
-</html>
-```
 
 **Install pipe.html on the server (included with this package):**
 
